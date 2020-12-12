@@ -5,7 +5,7 @@ const userSchema = mongoose.Schema({
   tel: { type: Number },
   email: { type: String,unique : true },
   type: { type: String},
-  mot_de_pass: { type: String },
+  mot_de_passe: { type: String },
 });
 
 module.exports = mongoose.model('User', userSchema);
