@@ -3,7 +3,6 @@ const jwt = require('jsonwebtoken');
 
 exports.getAllUser = (req, res) => {
     var filter = (req.query.filter) ? req.query.filter : '' ;
-    console.log(req.query.filter);
     User.find({ nom: { $regex : filter, $options : 'i' }})
         .then(users => res.json(users))
         .catch(error => res.json({ error }));
