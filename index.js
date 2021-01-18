@@ -3,6 +3,7 @@ const app = express();
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const userRouter = require('./routes/user');
+const taxiRouter = require('./routes/taxi');
 const mapsRouter = require('./routes/maps');
 const contrUser = require('./controllers/user');
 const { request } = require('express');
@@ -24,6 +25,7 @@ app.use(cors());
 app.post('/api/login', contrUser.login);
 app.use('/api/user', userRouter);
 app.use('/api/maps', mapsRouter);
+app.use('/api/taxi', taxiRouter);
 
 let interval = [];
 
