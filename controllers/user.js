@@ -1,5 +1,6 @@
 const User = require('../models/user');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 exports.getAllUser = (req, res) => {
     var filter = (req.query.filter) ? req.query.filter : '' ;
@@ -15,17 +16,21 @@ exports.getUser = (req, res) => {
 };
 
 exports.createUser = (req, res) => {
-    var user = new User({
-        nom: req.body.nom,
-        tel: req.body.tel,
-        email: req.body.email,
-        type: req.body.type,
-        mot_de_passe: req.body.mot_de_passe
-    })
-    user.save()
-        .then(() => { res.json({ message: 'user created !' }) })
-        .catch(error => res.json({ error }));
-};
+    bcrypt.hash(req.body.mot_de_passe, 10)
+      .then(hash => {
+        const user = new User({
+            nom: req.body.nom,
+            tel: req.body.tel,
+            email: req.body.email,
+            type: req.body.type,
+            mot_de_passe: hash
+        });
+        user.save()
+          .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
+          .catch(error => res.status(400).json({ error }));
+      })
+      .catch(error => res.status(500).json({ error }));
+  };
 
 exports.updateUser = (req, res) => {
     User.updateOne({ _id: req.params.id }, {
@@ -47,25 +52,27 @@ exports.deleteUser = (req, res) => {
 
 exports.login = (req, res) => {
     User.findOne({ email: req.body.email })
-        .then(user => {
-            if (!user) {
-                res.status(401).json({ message: 'Not Authorized' });
+      .then(user => {
+        if (!user) {
+           res.status(401).json({ error: 'User Not Found !' });
+           
+        }
+        bcrypt.compare(req.body.mot_de_passe, user.mot_de_passe)
+          .then(valid => {
+            if (!valid) {
+              return res.status(401).json({ error: 'Wrong Password !' });
             }
-            else {
-                if (req.body.mot_de_passe == user.mot_de_passe) {
-                    res.json({
-                        token: jwt.sign(
-                            { id: user._id,
-                            type: user.type},
-                            'RANDOM_TOKEN_SECRET',
-                            { expiresIn: '24h' }
-                        )
-                    });
-                }
-                else {
-                    res.json({ message: 'mot de passe incorrect' });
-                }
-            }
-        })
-        .catch(error => res.json({ error }));
-};
+            res.status(200).json({
+              token: jwt.sign(
+                { id: user._id,
+                    type: user.type},
+                    'RANDOM_TOKEN_SECRET',
+                    { expiresIn: '24h' }
+              ),
+              user: user
+            });
+          })
+          .catch(error => res.status(500).json({ error }));
+      })
+      .catch(error => res.status(500).json({ error }));
+  };
